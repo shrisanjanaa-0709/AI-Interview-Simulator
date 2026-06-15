@@ -1,9 +1,20 @@
 from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
 import pdfplumber
+from google import genai
+import os
+from dotenv import load_dotenv
 
 app = FastAPI()
+load_dotenv()
+
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
 
 
+class SkillsInput(BaseModel):
+    skills: list[str]
 @app.get("/")
 def home():
     return {
@@ -97,4 +108,27 @@ async def parse_resume(file: UploadFile = File(...)):
         "education": education,
         "projects": projects,
         "experience": experience
+    }
+@app.post("/generate-questions")
+async def generate_questions(data: SkillsInput):
+
+    prompt = f"""
+    Generate exactly 10 technical interview questions.
+
+    Skills:
+    {", ".join(data.skills)}
+
+    Return only the questions.
+    Number them from 1 to 10.
+    """
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+
+    questions = response.text.split("\n")
+
+    return {
+        "questions": questions
     }
