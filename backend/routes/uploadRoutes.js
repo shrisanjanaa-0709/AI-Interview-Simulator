@@ -1,7 +1,9 @@
-// routes/uploadRoutes.js
 
 const express = require("express");
 const multer = require("multer");
+const axios = require("axios");
+const FormData = require("form-data");
+const fs = require("fs");
 
 const router = express.Router();
 const storage = multer.diskStorage({
@@ -24,17 +26,71 @@ const upload = multer({
     storage,
     fileFilter,
 });
-router.post("/resume", upload.single("resume"), (req, res) => {
+router.post(
+  "/resume",
+  upload.single("resume"),
+  async (req, res) => {
 
-    if (!req.file) {
+    try {
+
+      if (!req.file) {
         return res.status(400).json({
-            message: "No file uploaded",
+          message: "No file uploaded",
         });
-    }
+      }
 
-    res.status(200).json({
-        message: "Resume uploaded successfully",
-        file: req.file.filename,
-    });
-});
+      const formData = new FormData();
+
+      formData.append(
+        "file",
+        fs.createReadStream(req.file.path)
+      );
+
+      // Parse resume
+      const parseResponse = await axios.post(
+        "http://127.0.0.1:8000/parse-resume",
+        formData,
+        {
+          headers: formData.getHeaders(),
+        }
+      );
+
+      const skills =
+        parseResponse.data.skills;
+
+      // Generate questions
+      const questionResponse =
+        await axios.post(
+          "http://127.0.0.1:8000/generate-questions",
+          {
+            skills,
+          }
+        );
+
+      return res.status(200).json({
+
+        message:
+          "Resume processed successfully",
+
+        skills,
+
+        questions:
+          questionResponse.data.questions,
+
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      return res.status(500).json({
+
+        message:
+          "Error processing resume",
+
+      });
+
+    }
+  }
+);
 module.exports = router;

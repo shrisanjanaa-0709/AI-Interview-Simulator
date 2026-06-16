@@ -1,19 +1,21 @@
+
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function ResumeUpload() {
   const [resume, setResume] = useState(null);
+  const navigate = useNavigate();
 
   const handleUpload = async () => {
-    // Check if a file is selected
+    
     if (!resume) {
       alert("Please select a PDF resume.");
       return;
     }
 
-    // Create FormData object
+    
     const formData = new FormData();
 
-    // "resume" must match upload.single("resume") in backend
     formData.append("resume", resume);
 
     try {
@@ -28,10 +30,21 @@ function ResumeUpload() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
-      } else {
-        alert(data.message || "Upload failed.");
-      }
+
+  localStorage.setItem(
+    "questions",
+    JSON.stringify(data.questions)
+  );
+
+  alert("Questions generated successfully!");
+
+  navigate("/interview");
+
+} else {
+
+  alert(data.message || "Upload failed.");
+
+}
     } catch (error) {
       console.error("Error uploading resume:", error);
       alert("Something went wrong while uploading.");
