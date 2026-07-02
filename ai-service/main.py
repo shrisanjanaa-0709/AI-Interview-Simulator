@@ -1,3 +1,5 @@
+from fastapi.middleware.cors import CORSMiddleware
+from evaluator import  evaluate_all_answers
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 import pdfplumber
@@ -6,6 +8,13 @@ import os
 from dotenv import load_dotenv
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 load_dotenv()
 
 client = genai.Client(
@@ -15,6 +24,13 @@ client = genai.Client(
 
 class SkillsInput(BaseModel):
     skills: list[str]
+class Answer(BaseModel):
+    question: str
+    answer: str
+class EvaluationRequest(BaseModel):
+    answers: list[Answer]
+    
+        
 @app.get("/")
 def home():
     return {
@@ -27,7 +43,7 @@ async def parse_resume(file: UploadFile = File(...)):
 
     text = ""
 
-    # Extract text from PDF
+   
     with pdfplumber.open(file.file) as pdf:
 
         for page in pdf.pages:
@@ -113,22 +129,36 @@ async def parse_resume(file: UploadFile = File(...)):
 async def generate_questions(data: SkillsInput):
 
     prompt = f"""
-    Generate exactly 10 technical interview questions.
+Generate EXACTLY 10 technical interview questions based on these skills.
 
-    Skills:
-    {", ".join(data.skills)}
+Skills:
+{", ".join(data.skills)}
 
-    Return only the questions.
-    Number them from 1 to 10.
-    """
+Rules:
+- Return ONLY the 10 questions.
+- Do not add headings.
+- Do not add explanations.
+- One question per line.
+"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
 
-    questions = response.text.split("\n")
+    questions = [
+        q.strip()
+        for q in response.text.split("\n")
+        if q.strip()
+    ]
+
+    questions = questions[:10]
 
     return {
         "questions": questions
     }
+@app.post("/evaluate-answer")
+def evaluate(request: EvaluationRequest):
+
+    return evaluate_all_answers(request.answers)
+    
