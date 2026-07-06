@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from database import db
 from fastapi.middleware.cors import CORSMiddleware
 from evaluator import  evaluate_all_answers
 from fastapi import FastAPI, UploadFile, File
@@ -6,6 +8,9 @@ import pdfplumber
 from google import genai
 import os
 from dotenv import load_dotenv
+
+users_collection = db["users"]
+interviews_collection = db["interviews"]
 
 app = FastAPI()
 app.add_middleware(
@@ -21,16 +26,19 @@ client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
-
 class SkillsInput(BaseModel):
     skills: list[str]
 class Answer(BaseModel):
     question: str
     answer: str
+
 class EvaluationRequest(BaseModel):
+    skills: list[str]
+    education: list[str]
+    projects: list[str]
+    experience: list[str]
     answers: list[Answer]
-    
-        
+       
 @app.get("/")
 def home():
     return {
@@ -159,6 +167,28 @@ Rules:
     }
 @app.post("/evaluate-answer")
 def evaluate(request: EvaluationRequest):
+   
+    result = evaluate_all_answers(request.answers)
 
-    return evaluate_all_answers(request.answers)
+   
+    interview_data = {
+        "skills": request.skills,
+        "education": request.education,
+        "projects": request.projects,
+        "experience": request.experience,
+
+        "questions": [a.question for a in request.answers],
+        "answers": [a.answer for a in request.answers],
+
+        "evaluation": result["results"],
+
+        "created_at": datetime.now(timezone.utc),
+}
+
     
+    insert_result = interviews_collection.insert_one(interview_data)
+
+    print("Inserted ID:", insert_result.inserted_id)
+
+    return result
+

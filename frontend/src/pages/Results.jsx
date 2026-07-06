@@ -23,6 +23,13 @@ function Results() {
   useEffect(() => {
   const evaluate = async () => {
     const answers = JSON.parse(localStorage.getItem("answers")) || [];
+    const skills = JSON.parse(localStorage.getItem("skills")) || [];
+
+    const education = JSON.parse(localStorage.getItem("education")) || [];
+
+    const projects = JSON.parse(localStorage.getItem("projects")) || [];
+
+    const experience = JSON.parse(localStorage.getItem("experience")) || [];
 
     if (answers.length === 0) {
       setLoading(false);
@@ -35,7 +42,11 @@ function Results() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-  answers: answers
+         skills,
+        education,
+        projects,
+        experience,
+        answers,
 }),
     });
 

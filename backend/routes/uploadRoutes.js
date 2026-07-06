@@ -55,8 +55,13 @@ router.post(
         }
       );
 
-      const skills =
-        parseResponse.data.skills;
+      const skills = parseResponse.data.skills;
+
+      const education = parseResponse.data.education;
+
+      const projects = parseResponse.data.projects;
+
+      const experience = parseResponse.data.experience;
 
       // Generate questions
       const questionResponse =
@@ -69,15 +74,16 @@ router.post(
 
       return res.status(200).json({
 
-        message:
-          "Resume processed successfully",
+  message: "Resume processed successfully",
 
-        skills,
+  skills,
+  education,
+  projects,
+  experience,
 
-        questions:
-          questionResponse.data.questions,
+  questions: questionResponse.data.questions,
 
-      });
+});
 
     } catch (error) {
 

@@ -30,11 +30,30 @@ function ResumeUpload() {
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.setItem(
+      "skills",
+      JSON.stringify(data.skills)
+    );
 
-  localStorage.setItem(
-    "questions",
-    JSON.stringify(data.questions)
-  );
+    localStorage.setItem(
+      "education",
+      JSON.stringify(data.education)
+    );
+
+    localStorage.setItem(
+      "projects",
+      JSON.stringify(data.projects)
+    );
+
+    localStorage.setItem(
+      "experience",
+      JSON.stringify(data.experience)
+    );
+
+      localStorage.setItem(
+        "questions",
+        JSON.stringify(data.questions)
+      );
 
   alert("Questions generated successfully!");
 
