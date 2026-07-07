@@ -1,13 +1,28 @@
+# Node dependencies
 node_modules/
+
+# Build files
 dist/
 
+# Environment variables
 .env
+backend/.env
 ai-service/.env
 
-backend/uploads/
-
+# Python virtual environment
+venv/
 ai-service/venv/
+
+# Python cache
 __pycache__/
 *.pyc
 
+# Uploaded resumes
+backend/uploads/
+
+# VS Code settings
 .vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

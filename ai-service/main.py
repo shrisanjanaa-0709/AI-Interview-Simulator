@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from database import db
+from database import users_collection, interviews_collection
+import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
 from evaluator import  evaluate_all_answers
 from fastapi import FastAPI, UploadFile, File
@@ -9,8 +10,6 @@ from google import genai
 import os
 from dotenv import load_dotenv
 
-users_collection = db["users"]
-interviews_collection = db["interviews"]
 
 app = FastAPI()
 app.add_middleware(
@@ -33,11 +32,23 @@ class Answer(BaseModel):
     answer: str
 
 class EvaluationRequest(BaseModel):
+    user_id: str
+
     skills: list[str]
     education: list[str]
     projects: list[str]
     experience: list[str]
+
     answers: list[Answer]
+
+class SignupRequest(BaseModel):
+    name: str
+    email: str
+    password: str    
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str    
        
 @app.get("/")
 def home():
@@ -172,6 +183,7 @@ def evaluate(request: EvaluationRequest):
 
    
     interview_data = {
+        "user_id": request.user_id,
         "skills": request.skills,
         "education": request.education,
         "projects": request.projects,
@@ -192,3 +204,88 @@ def evaluate(request: EvaluationRequest):
 
     return result
 
+@app.post("/signup")
+def signup(user: SignupRequest):
+
+   
+    name = user.name.strip()
+    email = user.email.strip().lower()
+    password = user.password.strip()
+
+    
+    if not name or not email or not password:
+        return {
+            "success": False,
+            "message": "All fields are required"
+        }
+
+    
+    existing_user = users_collection.find_one({"email": email})
+
+    if existing_user:
+        return {
+            "success": False,
+            "message": "Email already exists"
+        }
+
+   
+    hashed_password = bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+   
+    user_data = {
+        "name": name,
+        "email": email,
+        "password": hashed_password,
+        "created_at": datetime.now(timezone.utc)
+    }
+
+
+    users_collection.insert_one(user_data)
+
+    return {
+        "success": True,
+        "message": "User registered successfully"
+    }
+@app.post("/login")
+def login(user: LoginRequest):
+
+    email = user.email.strip().lower()
+    password = user.password.strip()
+
+    if not email or not password:
+        return {
+            "success": False,
+            "message": "Email and password are required"
+        }
+
+    existing_user = users_collection.find_one({"email": email})
+
+    if not existing_user:
+        return {
+            "success": False,
+            "message": "Invalid email or password"
+        }
+
+    password_match = bcrypt.checkpw(
+        password.encode("utf-8"),
+        existing_user["password"].encode("utf-8")
+    )
+
+    if not password_match:
+        return {
+            "success": False,
+            "message": "Invalid email or password"
+        }
+
+    return {
+        "success": True,
+        "message": "Login successful",
+        "user": {
+            "id": str(existing_user["_id"]),
+            "name": existing_user["name"],
+            "email": existing_user["email"]
+        }
+    }

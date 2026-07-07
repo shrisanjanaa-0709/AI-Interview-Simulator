@@ -10,4 +10,13 @@ client = MongoClient(MONGO_URI)
 
 db = client["ai_interview_simulator"]
 
-print("✅ Connected to MongoDB Atlas")
+users_collection = db["users"]
+
+interviews_collection = db["interviews"]
+
+try:
+    client.admin.command("ping")
+    print("Connecting to MongoDB...")
+except Exception as e:
+    print("Connection to MongoDB failed.")
+    print(e)

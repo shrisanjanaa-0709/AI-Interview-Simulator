@@ -36,17 +36,21 @@ function Results() {
       return;
     }
 
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
     const response = await fetch("http://127.0.0.1:8000/evaluate-answer", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-         skills,
-        education,
-        projects,
-        experience,
-        answers,
+    user_id: user.id,
+
+    skills,
+    education,
+    projects,
+    experience,
+    answers,
 }),
     });
 
