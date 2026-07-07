@@ -24,14 +24,25 @@ const handleSignup = async (e) => {
         return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-        if (formData.password.length < 8) {
-        alert("Password must be at least 8 characters");
-        return;
+    if (formData.password.length < 8) {
+    alert("Password must contain at least 8 characters");
+    return;
 }
-        alert("Passwords do not match");
-        return;
-    }
+
+const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+if (!passwordRegex.test(formData.password)) {
+    alert(
+        "Password must contain at least one uppercase letter, one lowercase letter and one number."
+    );
+    return;
+}
+
+if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match");
+    return;
+}
     setLoading(true);
     try {
 
@@ -117,23 +128,28 @@ const handleChange = (e) => {
             </label>
 
             <input
-              type="password"
-              placeholder="Create a password"
+                  type="password"
+                  placeholder="Create a password"
+                  minLength={8}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="password"
               value={formData.password}
               onChange={handleChange}
             />
           </div>
+          <p className="mt-2 text-sm text-gray-500">
+  Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, and one number.
+</p>
 
           <div className="mb-4">
             <label className="mb-2 block font-medium">
               Confirm Password
             </label>
 
-            <input
-              type="password"
-              placeholder="Confirm password"
+           <input
+    type="password"
+    placeholder="Confirm password"
+    minLength={8}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="confirmPassword"
               value={formData.confirmPassword}
