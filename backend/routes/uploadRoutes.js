@@ -46,15 +46,17 @@ router.post(
         fs.createReadStream(req.file.path)
       );
 
-      // Parse resume
+      
       const parseResponse = await axios.post(
-        "http://127.0.0.1:8000/parse-resume",
-        formData,
-        {
-          headers: formData.getHeaders(),
-        }
-      );
-
+  "http://127.0.0.1:8000/parse-resume",
+  formData,
+  {
+    headers: {
+      ...formData.getHeaders(),
+      Authorization: req.headers.authorization,
+    },
+  }
+);
       const skills = parseResponse.data.skills;
 
       const education = parseResponse.data.education;
@@ -63,14 +65,19 @@ router.post(
 
       const experience = parseResponse.data.experience;
 
-      // Generate questions
+      
       const questionResponse =
-        await axios.post(
-          "http://127.0.0.1:8000/generate-questions",
-          {
-            skills,
-          }
-        );
+  await axios.post(
+    "http://127.0.0.1:8000/generate-questions",
+    {
+      skills,
+    },
+    {
+      headers: {
+        Authorization: req.headers.authorization,
+      },
+    }
+  );
 
       return res.status(200).json({
 

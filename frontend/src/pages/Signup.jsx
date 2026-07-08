@@ -55,10 +55,19 @@ if (formData.password !== formData.confirmPassword) {
             }
         );
 
-        alert(response.data.message);
+        localStorage.setItem(
+    "token",
+    response.data.token
+);
 
-        navigate("/login");
+localStorage.setItem(
+    "user",
+    JSON.stringify(response.data.user)
+);
 
+alert(response.data.message);
+
+navigate("/upload");
     } catch (error) {
 
         if (error.response) {

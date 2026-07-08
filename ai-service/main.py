@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from database import users_collection, interviews_collection
 import bcrypt
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +9,9 @@ import pdfplumber
 from google import genai
 import os
 from dotenv import load_dotenv
+from jose import jwt, JWTError
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
 app = FastAPI()
@@ -24,6 +27,12 @@ load_dotenv()
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+JWT_EXPIRE_DAYS = int(os.getenv("JWT_EXPIRE_DAYS", 7))
+
+security = HTTPBearer()
 
 class SkillsInput(BaseModel):
     skills: list[str]
@@ -49,7 +58,48 @@ class SignupRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str    
-       
+
+def create_access_token(user):
+
+    payload = {
+        "id": str(user["_id"]),
+        "name": user["name"],
+        "email": user["email"],
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS)
+    }
+
+    token = jwt.encode(
+        payload,
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM
+    )
+
+    return token
+
+
+def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+
+    token = credentials.credentials
+
+    try:
+
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM]
+        )
+
+        return payload
+
+    except JWTError:
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+           
 @app.get("/")
 def home():
     return {
@@ -58,8 +108,10 @@ def home():
 
 
 @app.post("/parse-resume")
-async def parse_resume(file: UploadFile = File(...)):
-
+async def parse_resume(
+    file: UploadFile = File(...),
+    user=Depends(verify_token)
+):
     text = ""
 
    
@@ -145,8 +197,10 @@ async def parse_resume(file: UploadFile = File(...)):
         "experience": experience
     }
 @app.post("/generate-questions")
-async def generate_questions(data: SkillsInput):
-
+async def generate_questions(
+    data: SkillsInput,
+    user=Depends(verify_token)
+):
     prompt = f"""
 Generate EXACTLY 10 technical interview questions based on these skills.
 
@@ -177,7 +231,10 @@ Rules:
         "questions": questions
     }
 @app.post("/evaluate-answer")
-def evaluate(request: EvaluationRequest):
+def evaluate(
+    request: EvaluationRequest,
+    user=Depends(verify_token)
+):
    
     result = evaluate_all_answers(request.answers)
 
@@ -242,12 +299,21 @@ def signup(user: SignupRequest):
         "created_at": datetime.now(timezone.utc)
     }
 
+    result = users_collection.insert_one(user_data)
 
-    users_collection.insert_one(user_data)
+    user_data["_id"] = result.inserted_id
+
+    token = create_access_token(user_data)
 
     return {
         "success": True,
-        "message": "User registered successfully"
+        "message": "User registered successfully",
+        "token": token,
+        "user": {
+            "id": str(user_data["_id"]),
+            "name": user_data["name"],
+            "email": user_data["email"]
+        }
     }
 @app.post("/login")
 def login(user: LoginRequest):
@@ -280,9 +346,12 @@ def login(user: LoginRequest):
             "message": "Invalid email or password"
         }
 
+    token = create_access_token(existing_user)
+
     return {
         "success": True,
         "message": "Login successful",
+        "token": token,
         "user": {
             "id": str(existing_user["_id"]),
             "name": existing_user["name"],

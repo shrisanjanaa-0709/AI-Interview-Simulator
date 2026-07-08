@@ -8,6 +8,8 @@ import {
 } from "chart.js";
 
 import { Bar } from "react-chartjs-2";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 ChartJS.register(
   CategoryScale,
@@ -37,12 +39,14 @@ function Results() {
     }
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const token = localStorage.getItem("token");
 
     const response = await fetch("http://127.0.0.1:8000/evaluate-answer", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-      },
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+},
       body: JSON.stringify({
     user_id: user.id,
 
@@ -56,8 +60,21 @@ function Results() {
 
     const data = await response.json();
 
-    setEvaluations(data.results);
-    setLoading(false);
+if (response.status === 401) {
+
+  alert("Your session has expired. Please login again.");
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  window.location.href = "/login";
+
+  return;
+}
+
+setEvaluations(data.results);
+
+setLoading(false);
   };
 
   evaluate();
@@ -114,6 +131,55 @@ const chartData = {
       borderRadius: 8,
     },
   ],
+};
+const downloadReport = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(20);
+  doc.text("AI Interview Simulator", 20, 20);
+
+  doc.setFontSize(16);
+  doc.text("Interview Performance Report", 20, 32);
+
+  doc.setFontSize(12);
+
+  doc.text(`Candidate: ${user.name || "Unknown"}`, 20, 45);
+  doc.text(`Email: ${user.email || "Unknown"}`, 20, 53);
+
+  doc.text(`Overall Score: ${overallScore * 10}%`, 20, 65);
+
+  doc.text(
+    `Technical: ${technicalAverage * 10}%`,
+    20,
+    75
+  );
+
+  doc.text(
+    `Communication: ${communicationAverage * 10}%`,
+    20,
+    83
+  );
+
+  doc.text(
+    `Confidence: ${confidenceAverage * 10}%`,
+    20,
+    91
+  );
+
+  autoTable(doc, {
+    startY: 105,
+
+    head: [["Question", "Feedback"]],
+
+    body: evaluations.map((item, index) => [
+      `Q${index + 1}`,
+      item.feedback,
+    ]),
+  });
+
+  doc.save("Interview_Report.pdf");
 };
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
@@ -246,9 +312,12 @@ const chartData = {
 
         {/* Download Button */}
         <div className="mt-8 text-center">
-          <button className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700">
-            Download PDF Report
-          </button>
+          <button
+  onClick={downloadReport}
+  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+>
+  Download PDF Report
+</button>
         </div>
 
       </div>

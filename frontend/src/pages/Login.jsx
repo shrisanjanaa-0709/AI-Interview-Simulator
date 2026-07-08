@@ -40,10 +40,19 @@ const handleLogin = async (e) => {
         );
 
         localStorage.setItem(
-            "user",
-            JSON.stringify(response.data.user)
-        );
+    "token",
+    response.data.token
+);
 
+localStorage.setItem(
+    "token",
+    response.data.token
+);
+
+localStorage.setItem(
+    "user",
+    JSON.stringify(response.data.user)
+);
         alert(response.data.message);
 
         navigate("/upload");
