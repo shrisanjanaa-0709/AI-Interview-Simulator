@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import re
 
 
 app = FastAPI()
@@ -264,19 +265,34 @@ def evaluate(
 @app.post("/signup")
 def signup(user: SignupRequest):
 
-   
     name = user.name.strip()
     email = user.email.strip().lower()
     password = user.password.strip()
 
-    
+    password_pattern = (
+        r"^(?=.*[a-z])"
+        r"(?=.*[A-Z])"
+        r"(?=.*\d)"
+        r"(?=.*[@$!%*?&^#()_\-+=])"
+        r"[A-Za-z\d@$!%*?&^#()_\-+=]{8,}$"
+    )
+
+    if not re.match(password_pattern, password):
+        return {
+            "success": False,
+            "message": (
+                "Password must be at least 8 characters long and contain "
+                "at least one uppercase letter, one lowercase letter, "
+                "one number, and one special character."
+            )
+        }
+
     if not name or not email or not password:
         return {
             "success": False,
             "message": "All fields are required"
         }
 
-    
     existing_user = users_collection.find_one({"email": email})
 
     if existing_user:
@@ -285,13 +301,11 @@ def signup(user: SignupRequest):
             "message": "Email already exists"
         }
 
-   
     hashed_password = bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt()
     ).decode("utf-8")
 
-   
     user_data = {
         "name": name,
         "email": email,
@@ -315,6 +329,7 @@ def signup(user: SignupRequest):
             "email": user_data["email"]
         }
     }
+
 @app.post("/login")
 def login(user: LoginRequest):
 

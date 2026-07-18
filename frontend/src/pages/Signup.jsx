@@ -11,8 +11,10 @@ function Signup() {
     confirmPassword: ""
 });
 const [loading, setLoading] = useState(false);
+const [passwordError, setPasswordError] = useState("");
 const handleSignup = async (e) => {
     e.preventDefault();
+    setPasswordError("");
 
     if (
         !formData.name ||
@@ -30,15 +32,14 @@ const handleSignup = async (e) => {
 }
 
 const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()_\-+=])[A-Za-z\d@$!%*?&^#()_\-+=]{8,}$/;
 
 if (!passwordRegex.test(formData.password)) {
-    alert(
-        "Password must contain at least one uppercase letter, one lowercase letter and one number."
+    setPasswordError(
+        "Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, one number, and one special character."
     );
     return;
 }
-
 if (formData.password !== formData.confirmPassword) {
     alert("Passwords do not match");
     return;
@@ -147,8 +148,14 @@ const handleChange = (e) => {
             />
           </div>
           <p className="mt-2 text-sm text-gray-500">
-  Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, and one number.
+  Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, one number, and one special character.
 </p>
+
+{passwordError && (
+  <p className="mt-2 text-sm text-red-600">
+    {passwordError}
+  </p>
+)}
 
           <div className="mb-4">
             <label className="mb-2 block font-medium">

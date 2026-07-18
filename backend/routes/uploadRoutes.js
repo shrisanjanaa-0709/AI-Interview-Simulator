@@ -48,7 +48,7 @@ router.post(
 
       
       const parseResponse = await axios.post(
-  "http://127.0.0.1:8000/parse-resume",
+  `${process.env.FASTAPI_URL}/parse-resume`,
   formData,
   {
     headers: {
@@ -68,7 +68,7 @@ router.post(
       
       const questionResponse =
   await axios.post(
-    "http://127.0.0.1:8000/generate-questions",
+  `${process.env.FASTAPI_URL}/generate-questions`,
     {
       skills,
     },
