@@ -48,7 +48,7 @@ if (formData.password !== formData.confirmPassword) {
     try {
 
         const response = await axios.post(
-            "http://localhost:5000/api/auth/signup",
+    `${import.meta.env.VITE_API_URL}/api/auth/signup`,
             {
                 name: formData.name,
                 email: formData.email,
