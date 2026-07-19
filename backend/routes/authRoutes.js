@@ -16,13 +16,15 @@ router.post("/signup", async (req, res) => {
         res.json(response.data);
 
     } catch (error) {
+    console.log("Signup Error:");
+    console.log(error.response?.data);
+    console.log(error.message);
 
-        res.status(500).json({
-            success: false,
-            message: "Signup failed"
-        });
-
-    }
+    res.status(500).json({
+        success: false,
+        message: error.response?.data || error.message
+    });
+}
 });
 
 
@@ -37,13 +39,15 @@ router.post("/login", async (req, res) => {
         res.json(response.data);
 
     } catch (error) {
+    console.log("Login Error:");
+    console.log(error.response?.data);
+    console.log(error.message);
 
-        res.status(500).json({
-            success: false,
-            message: "Login failed"
-        });
-
-    }
+    res.status(500).json({
+        success: false,
+        message: error.response?.data || error.message
+    });
+}
 });
 
 module.exports = router;
