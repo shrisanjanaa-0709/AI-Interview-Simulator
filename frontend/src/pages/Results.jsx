@@ -42,7 +42,7 @@ function Results() {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-  `${import.meta.env.VITE_API_URL}/evaluate-answer`,
+  `${import.meta.env.VITE_API_URL}/api/upload/evaluate-answer`,
   {
     method: "POST",
     headers: {
