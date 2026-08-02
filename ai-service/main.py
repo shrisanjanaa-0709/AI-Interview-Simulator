@@ -265,6 +265,8 @@ def evaluate(
 @app.post("/signup")
 def signup(user: SignupRequest):
 
+    print("========== SIGNUP HIT ==========")
+
     name = user.name.strip()
     email = user.email.strip().lower()
     password = user.password.strip()
@@ -332,6 +334,8 @@ def signup(user: SignupRequest):
 
 @app.post("/login")
 def login(user: LoginRequest):
+
+    print("========== LOGIN HIT ==========")
 
     email = user.email.strip().lower()
     password = user.password.strip()
