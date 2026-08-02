@@ -107,4 +107,29 @@ router.post(
     }
   }
 );
+router.post("/evaluate-answer", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${process.env.FASTAPI_URL}/evaluate-answer`,
+      req.body,
+      {
+        headers: {
+          Authorization: req.headers.authorization,
+        },
+      }
+    );
+
+    res.json(response.data);
+
+  } catch (error) {
+    console.error("Evaluation Error:");
+    console.error(error.response?.data);
+    console.error(error.message);
+
+    res.status(500).json({
+      success: false,
+      message: error.response?.data || error.message,
+    });
+  }
+});
 module.exports = router;

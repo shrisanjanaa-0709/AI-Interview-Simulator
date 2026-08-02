@@ -23,7 +23,7 @@ function Interview() {
     transcript,
     resetTranscript,
     browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+  } = useSpeechRecognition();a
 
   if (!browserSupportsSpeechRecognition) {
     return (
