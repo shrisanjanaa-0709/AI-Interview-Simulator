@@ -15,7 +15,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import re
 
 
-app = FastAPI()
+app = FastAPI(
+    root_path="/proxy/8000",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
